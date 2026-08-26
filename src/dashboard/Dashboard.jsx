@@ -28,6 +28,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
+
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      const handleStorageChange = (changes, namespace) => {
+        if (namespace === 'local' && changes.messages) {
+          setMessages(changes.messages.newValue || []);
+        }
+      };
+
+      chrome.storage.onChanged.addListener(handleStorageChange);
+
+      return () => {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      };
+    }
   }, []);
 
   const handleDelete = async (id) => {
