@@ -1,16 +1,112 @@
 let isSiteAllowed = false;
+let isListenerAttached = false;
 let shortcutsMap = {};
 
 const currentHost = window.location.hostname.replace(/^www\./, '').toLowerCase();
 
 const checkAllowedSites = (allowedSites) => {
+const checkDomain = (allowedSites) => {
   const sites = allowedSites || ['chatgpt.com'];
   isSiteAllowed = sites.some(site => currentHost.includes(site));
+  return sites.some(site => currentHost.includes(site));
+};
+
+const handleKeyDown = (event) => {
+  if (event.key === ' ') {
+    const el = document.activeElement;
+    if (!el) return;
+
+    const isTextarea = el.tagName === 'TEXTAREA' || el.tagName === 'INPUT';
+    const isContentEditable = el.isContentEditable;
+
+    if (!isTextarea && !isContentEditable) return;
+
+    if (isTextarea) {
+      const text = el.value;
+      const cursor = el.selectionStart;
+      const textBeforeCursor = text.slice(0, cursor);
+      const match = textBeforeCursor.match(/(\S+)$/);
+      
+      if (match) {
+        const lastWord = match[1];
+        const matchedMessage = shortcutsMap[lastWord];
+        if (matchedMessage) {
+          event.preventDefault(); // Stop the space from being typed
+          
+          const fullText = matchedMessage.text;
+          const newText = text.slice(0, cursor - lastWord.length) + fullText + text.slice(cursor);
+          
+          el.value = newText;
+          const newCursor = cursor - lastWord.length + fullText.length;
+          el.setSelectionRange(newCursor, newCursor);
+          
+          // Dispatch input event to notify React/Framework
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+
+          updateLastUsed(matchedMessage.id);
+        } else if (lastWord.startsWith(';') || lastWord.startsWith('-')) {
+          showUnknownShortcutPrompt(lastWord);
+        }
+      }
+    } else if (isContentEditable) {
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      
+      if (!range.collapsed) return;
+
+      const node = range.startContainer;
+      
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent;
+        const cursor = range.startOffset;
+        const textBeforeCursor = text.slice(0, cursor);
+        const match = textBeforeCursor.match(/(\S+)$/);
+        
+        if (match) {
+          const lastWord = match[1];
+          const matchedMessage = shortcutsMap[lastWord];
+          if (matchedMessage) {
+            event.preventDefault(); // Stop the space from being typed
+            
+            const fullText = matchedMessage.text;
+            
+            // Select the shortcut text
+            range.setStart(node, cursor - lastWord.length);
+            range.setEnd(node, cursor);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Use execCommand to replace the selection.
+            // This is the most reliable way to insert text into a contenteditable
+            // while preserving undo history and triggering framework events.
+            document.execCommand('insertText', false, fullText);
+
+            updateLastUsed(matchedMessage.id);
+          } else if (lastWord.startsWith(';') || lastWord.startsWith('-')) {
+            showUnknownShortcutPrompt(lastWord);
+          }
+        }
+      }
+    }
+  }
+};
+
+const toggleListener = (isAllowed) => {
+  if (isAllowed && !isListenerAttached) {
+    document.addEventListener('keydown', handleKeyDown, true);
+    isListenerAttached = true;
+  } else if (!isAllowed && isListenerAttached) {
+    document.removeEventListener('keydown', handleKeyDown, true);
+    isListenerAttached = false;
+  }
 };
 
 // Initial load for allowed sites
 chrome.storage.local.get(['allowedSites'], (result) => {
   checkAllowedSites(result.allowedSites);
+  const isAllowed = checkDomain(result.allowedSites);
+  toggleListener(isAllowed);
 });
 
 const loadShortcuts = () => {
@@ -32,6 +128,8 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local') {
     if (changes.allowedSites) {
       checkAllowedSites(changes.allowedSites.newValue);
+      const isAllowed = checkDomain(changes.allowedSites.newValue);
+      toggleListener(isAllowed);
     }
     
     if (changes.messages) {
