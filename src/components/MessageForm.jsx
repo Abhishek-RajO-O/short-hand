@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 
 const MessageForm = ({ initialData, onSubmit, onCancel }) => {
+const MessageForm = ({ initialData, onSubmit, onCancel, categories = ['General'] }) => {
   const [shortcut, setShortcut] = useState('');
   const [text, setText] = useState('');
+  const [category, setCategory] = useState('General');
   const [error, setError] = useState('');
 
   // If we pass in existing data (for editing), populate the form
@@ -10,6 +12,7 @@ const MessageForm = ({ initialData, onSubmit, onCancel }) => {
     if (initialData) {
       setShortcut(initialData.shortcut || '');
       setText(initialData.text || '');
+      setCategory(initialData.category || 'General');
     }
   }, [initialData]);
 
@@ -36,6 +39,7 @@ const MessageForm = ({ initialData, onSubmit, onCancel }) => {
       id: initialData?.id || Date.now(), // Keep ID if editing, generate new if creating
       shortcut: trimmedShortcut,
       text: trimmedText,
+      category: category,
     });
   };
 
@@ -56,6 +60,24 @@ const MessageForm = ({ initialData, onSubmit, onCancel }) => {
           className="w-full bg-darkNavy text-offWhite border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gold focus:border-transparent outline-none"
         />
         <p className="text-xs text-gray-400 mt-1">Must start with ; or -</p>
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">
+          Category
+        </label>
+        <select
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full bg-darkNavy text-offWhite border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gold focus:border-transparent outline-none"
+        >
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
