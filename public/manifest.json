@@ -8,7 +8,6 @@
     "default_title": "Open ShortHand"
   },
   "permissions": [
-    "storage"
     "storage",
     "activeTab"
   ],

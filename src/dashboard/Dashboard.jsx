@@ -270,6 +270,7 @@ const Dashboard = () => {
               <MessageForm 
                 initialData={editingMessage}
                 categories={categories}
+                existingMessages={messages}
                 onSubmit={handleSave} 
                 onCancel={() => {
                   setIsModalOpen(false);
