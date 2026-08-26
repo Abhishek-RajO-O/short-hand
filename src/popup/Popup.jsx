@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Popup = () => {
   return (
     <div className="flex flex-col h-full p-4">
@@ -7,7 +5,7 @@ const Popup = () => {
         <h1 className="text-gold text-3xl font-bold">ShortHand</h1>
       </header>
       
-      <main className="flex-grow flex flex-col gap-6">
+      <main className="grow flex flex-col gap-6">
         <div className="bg-darkGrey p-6 rounded-xl flex items-center justify-center shadow-sm">
           <p className="text-xl font-medium">0 messages saved</p>
         </div>
