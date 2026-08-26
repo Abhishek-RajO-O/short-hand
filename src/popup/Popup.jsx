@@ -28,6 +28,15 @@ const Popup = () => {
     }
   };
 
+  const handleOpenDashboard = () => {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+    } else {
+      console.warn('chrome.tabs is not available. Please test inside an extension context.');
+      window.open('/dashboard.html', '_blank'); // fallback for local dev
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-4">
       <header className="mb-6 text-center">
@@ -40,14 +49,16 @@ const Popup = () => {
         </div>
         
         <div className="flex flex-col gap-3 mt-auto mb-2">
-          <button className="bg-gold text-darkNavy font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity" />
           <button 
             onClick={handleAddMessage}
             className="bg-gold text-darkNavy font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity"
           >
             Add Message
           </button>
-          <button className="bg-darkGrey text-offWhite font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity">
+          <button 
+            onClick={handleOpenDashboard}
+            className="bg-darkGrey text-offWhite font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity"
+          >
             Open Dashboard
           </button>
         </div>

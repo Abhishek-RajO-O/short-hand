@@ -22,3 +22,14 @@ export const saveMessage = async (message) => {
   }
 };
 
+export const deleteMessage = async (id) => {
+  const messages = await getMessages();
+  const updatedMessages = messages.filter(msg => msg.id !== id);
+  
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    await chrome.storage.local.set({ messages: updatedMessages });
+  } else {
+    localStorage.setItem('messages', JSON.stringify(updatedMessages));
+  }
+};
+
