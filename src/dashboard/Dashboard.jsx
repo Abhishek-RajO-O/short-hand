@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { getMessages, deleteMessage, saveMessage, getCategories, addCategory, deleteCategory, bulkSaveMessages } from '../services/storage';
 import MessageForm from '../components/MessageForm';
 import CategorySidebar from '../components/CategorySidebar';
+import WebsiteManager from '../components/WebsiteManager';
 
 const Dashboard = () => {
   const [messages, setMessages] = useState([]);
@@ -143,9 +144,6 @@ const Dashboard = () => {
     reader.readAsText(file);
   };
 
-  const filteredMessages = activeCategory === 'All' 
-    ? messages 
-    : messages.filter(msg => (msg.category || 'General') === activeCategory);
   const filteredMessages = messages.filter(msg => {
     const matchesCategory = activeCategory === 'All' || (msg.category || 'General') === activeCategory;
     const lowerQuery = searchQuery.toLowerCase();
@@ -202,8 +200,8 @@ const Dashboard = () => {
             onDeleteCategory={handleDeleteCategory}
           />
           
-          <main className="flex-1">
           <main className="flex-1 flex flex-col gap-6">
+            <WebsiteManager />
             <div className="flex items-center bg-darkGrey border border-gray-600 rounded-lg p-2 focus-within:ring-2 focus-within:ring-gold focus-within:border-transparent transition-shadow shadow-sm">
               <span className="text-gray-400 pl-2 pr-1">🔍</span>
               <input
@@ -217,7 +215,6 @@ const Dashboard = () => {
             
             {filteredMessages.length === 0 ? (
               <div className="bg-darkGrey p-8 rounded-xl text-center shadow-md">
-                <p className="text-xl">No messages in this category.</p>
                 <p className="text-xl">No messages found.</p>
               </div>
             ) : (

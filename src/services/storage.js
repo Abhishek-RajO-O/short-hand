@@ -119,3 +119,38 @@ export const bulkSaveMessages = async (newMessages) => {
     localStorage.setItem('messages', JSON.stringify(mergedMessages));
   }
 };
+
+export const getAllowedSites = async () => {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    const result = await chrome.storage.local.get(['allowedSites']);
+    return result.allowedSites || ['chatgpt.com'];
+  }
+  const result = localStorage.getItem('allowedSites');
+  return result ? JSON.parse(result) : ['chatgpt.com'];
+};
+
+export const addAllowedSite = async (domain) => {
+  const sites = await getAllowedSites();
+  // Strip protocol and path if the user pasted a full URL
+  let cleanDomain = domain.replace(/^https?:\/\//, '').split('/')[0].trim().toLowerCase();
+  
+  if (cleanDomain && !sites.includes(cleanDomain)) {
+    const updatedSites = [...sites, cleanDomain];
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ allowedSites: updatedSites });
+    } else {
+      localStorage.setItem('allowedSites', JSON.stringify(updatedSites));
+    }
+  }
+};
+
+export const removeAllowedSite = async (domain) => {
+  const sites = await getAllowedSites();
+  const updatedSites = sites.filter(s => s !== domain);
+  
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    await chrome.storage.local.set({ allowedSites: updatedSites });
+  } else {
+    localStorage.setItem('allowedSites', JSON.stringify(updatedSites));
+  }
+};
