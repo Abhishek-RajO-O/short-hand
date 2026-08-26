@@ -1,4 +1,33 @@
+import { useEffect } from 'react';
+import { getMessages, saveMessage } from '../services/storage';
+
 const Popup = () => {
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const msgs = await getMessages();
+        console.log('Fetched messages on mount:', msgs);
+      } catch (error) {
+        console.error('Failed to fetch messages. Note: chrome.storage is only available in extension context.', error);
+      }
+    };
+    fetchMessages();
+  }, []);
+
+  const handleAddMessage = async () => {
+    const dummyMessage = {
+      id: Date.now(),
+      shortcut: ';test',
+      text: 'This is a test message'
+    };
+    try {
+      await saveMessage(dummyMessage);
+      console.log('Successfully saved dummy message:', dummyMessage);
+    } catch (error) {
+      console.error('Failed to save message. Note: chrome.storage is only available in extension context.', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-4">
       <header className="mb-6 text-center">
@@ -11,7 +40,11 @@ const Popup = () => {
         </div>
         
         <div className="flex flex-col gap-3 mt-auto mb-2">
-          <button className="bg-gold text-darkNavy font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity">
+          <button className="bg-gold text-darkNavy font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity" />
+          <button 
+            onClick={handleAddMessage}
+            className="bg-gold text-darkNavy font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity"
+          >
             Add Message
           </button>
           <button className="bg-darkGrey text-offWhite font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity">
@@ -24,4 +57,3 @@ const Popup = () => {
 };
 
 export default Popup;
-
