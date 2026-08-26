@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "ShortHand",
+  "version": "1.0.0",
+  "description": "Quick text expansion for support workflows.",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Open ShortHand"
+  },
+  "permissions": [
+    "storage"
+  ]
+}
