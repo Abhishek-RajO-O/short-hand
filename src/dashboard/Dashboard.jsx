@@ -10,6 +10,8 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const fileInputRef = useRef(null);
 
   const fetchData = async () => {
@@ -144,6 +146,12 @@ const Dashboard = () => {
   const filteredMessages = activeCategory === 'All' 
     ? messages 
     : messages.filter(msg => (msg.category || 'General') === activeCategory);
+  const filteredMessages = messages.filter(msg => {
+    const matchesCategory = activeCategory === 'All' || (msg.category || 'General') === activeCategory;
+    const lowerQuery = searchQuery.toLowerCase();
+    const matchesSearch = msg.shortcut.toLowerCase().includes(lowerQuery) || msg.text.toLowerCase().includes(lowerQuery);
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-darkNavy text-offWhite p-8 w-screen flex flex-col">
@@ -195,9 +203,22 @@ const Dashboard = () => {
           />
           
           <main className="flex-1">
+          <main className="flex-1 flex flex-col gap-6">
+            <div className="flex items-center bg-darkGrey border border-gray-600 rounded-lg p-2 focus-within:ring-2 focus-within:ring-gold focus-within:border-transparent transition-shadow shadow-sm">
+              <span className="text-gray-400 pl-2 pr-1">🔍</span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search shortcuts or messages..."
+                className="w-full bg-transparent text-offWhite outline-none p-1"
+              />
+            </div>
+            
             {filteredMessages.length === 0 ? (
               <div className="bg-darkGrey p-8 rounded-xl text-center shadow-md">
                 <p className="text-xl">No messages in this category.</p>
+                <p className="text-xl">No messages found.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
