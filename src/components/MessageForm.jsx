@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-const MessageForm = ({ initialData, onSubmit, onCancel }) => {
 const MessageForm = ({ initialData, onSubmit, onCancel, categories = ['General'] }) => {
   const [shortcut, setShortcut] = useState('');
   const [text, setText] = useState('');

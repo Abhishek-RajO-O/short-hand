@@ -11,7 +11,16 @@ export default defineConfig({
       input: {
         popup: resolve(import.meta.dirname, 'index.html'),
         dashboard: resolve(import.meta.dirname, 'dashboard.html'),
+        content: resolve(import.meta.dirname, 'src/content/contentScript.js'),
       },
+      output: {
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name === 'content') {
+            return 'assets/content.js';
+          }
+          return 'assets/[name]-[hash].js';
+        }
+      }
     },
   },
 })
