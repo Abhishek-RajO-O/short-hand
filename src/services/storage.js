@@ -12,7 +12,19 @@ export const getMessages = async () => {
 
 export const saveMessage = async (message) => {
   const messages = await getMessages();
-  const updatedMessages = [...messages, message];
+  
+  // Check if a message with this ID already exists
+  const existingIndex = messages.findIndex(msg => msg.id === message.id);
+  
+  let updatedMessages;
+  if (existingIndex >= 0) {
+    // If it exists, replace it (this handles Edits)
+    updatedMessages = [...messages];
+    updatedMessages[existingIndex] = message;
+  } else {
+    // If it doesn't exist, append it (this handles Create)
+    updatedMessages = [...messages, message];
+  }
   
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     await chrome.storage.local.set({ messages: updatedMessages });
