@@ -98,3 +98,24 @@ export const deleteCategory = async (name) => {
   }
 };
 
+export const bulkSaveMessages = async (newMessages) => {
+  if (!Array.isArray(newMessages)) return;
+  
+  const existingMessages = await getMessages();
+  const mergedMessages = [...existingMessages];
+  
+  newMessages.forEach(newMsg => {
+    const existingIndex = mergedMessages.findIndex(msg => msg.id === newMsg.id);
+    if (existingIndex >= 0) {
+      mergedMessages[existingIndex] = newMsg;
+    } else {
+      mergedMessages.push(newMsg);
+    }
+  });
+
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    await chrome.storage.local.set({ messages: mergedMessages });
+  } else {
+    localStorage.setItem('messages', JSON.stringify(mergedMessages));
+  }
+};

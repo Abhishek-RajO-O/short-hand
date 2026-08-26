@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getMessages, deleteMessage, saveMessage, getCategories, addCategory, deleteCategory } from '../services/storage';
+import { useEffect, useState, useRef } from 'react';
+import { getMessages, deleteMessage, saveMessage, getCategories, addCategory, deleteCategory, bulkSaveMessages } from '../services/storage';
 import MessageForm from '../components/MessageForm';
 import CategorySidebar from '../components/CategorySidebar';
 
@@ -10,17 +10,20 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null);
 
+  const fileInputRef = useRef(null);
+
+  const fetchData = async () => {
+    try {
+      const msgs = await getMessages();
+      setMessages(msgs);
+      const cats = await getCategories();
+      setCategories(cats);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const msgs = await getMessages();
-        setMessages(msgs);
-        const cats = await getCategories();
-        setCategories(cats);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
     fetchData();
   }, []);
 
@@ -74,6 +77,70 @@ const Dashboard = () => {
     }
   };
 
+  const handleExport = () => {
+    try {
+      const jsonString = JSON.stringify(messages, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'shorthand-backup.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export:', error);
+      alert('Failed to export backup.');
+    }
+  };
+
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target.result;
+        const parsed = JSON.parse(text);
+        
+        if (!Array.isArray(parsed)) {
+          throw new Error('Backup data must be an array of messages.');
+        }
+
+        await bulkSaveMessages(parsed);
+        
+        // Also auto-add any categories from the imported messages
+        const importedCategories = [...new Set(parsed.map(m => m.category).filter(Boolean))];
+        const currentCats = await getCategories();
+        for (const cat of importedCategories) {
+          if (!currentCats.includes(cat) && cat !== 'General') {
+             await addCategory(cat);
+          }
+        }
+        
+        await fetchData(); // Re-fetch all data to update UI instantly
+        alert('Backup imported successfully!');
+      } catch (error) {
+        console.error('Failed to parse backup:', error);
+        alert('Invalid backup file. Please make sure it is a valid ShortHand JSON export.');
+      }
+      
+      // Reset input so the same file can be imported again if needed
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
   const filteredMessages = activeCategory === 'All' 
     ? messages 
     : messages.filter(msg => (msg.category || 'General') === activeCategory);
@@ -82,21 +149,43 @@ const Dashboard = () => {
     <div className="min-h-screen bg-darkNavy text-offWhite p-8 w-screen flex flex-col">
       <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
         
-        {/* Header with Add Button */}
-        <header className="mb-10 flex justify-between items-center">
+        {/* Header */}
+        <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-gold text-4xl font-bold">ShortHand Dashboard</h1>
             <p className="text-gray-300 mt-2 text-lg">Manage your saved messages and shortcuts.</p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-gold text-darkNavy hover:bg-yellow-500 font-bold py-2 px-6 rounded-lg transition-colors shadow-md"
-          >
-            + Add New Shortcut
-          </button>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <button 
+              onClick={handleExport}
+              className="bg-darkGrey text-offWhite hover:bg-gray-600 border border-gray-600 font-semibold py-2 px-4 rounded-lg transition-colors shadow-sm text-sm"
+            >
+              Export
+            </button>
+            <button 
+              onClick={handleImportClick}
+              className="bg-darkGrey text-offWhite hover:bg-gray-600 border border-gray-600 font-semibold py-2 px-4 rounded-lg transition-colors shadow-sm text-sm"
+            >
+              Import
+            </button>
+            <input 
+              type="file" 
+              accept=".json" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              className="hidden" 
+            />
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="bg-gold text-darkNavy hover:bg-yellow-500 font-bold py-2 px-6 rounded-lg transition-colors shadow-md ml-2"
+            >
+              + Add New Shortcut
+            </button>
+          </div>
         </header>
         
-        <div className="flex-1 flex flex-row gap-8">
+        <div className="flex-1 flex flex-col md:flex-row gap-8">
           <CategorySidebar 
             categories={categories}
             activeCategory={activeCategory}
